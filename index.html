@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Test App</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 35px 30px;
+      border-radius: 18px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      width: 340px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    h1 {
+      margin-bottom: 15px;
+      color: #1e3a8a;
+    }
+
+    .search-box {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 10px 12px;
+      width: 70%;
+      border-radius: 8px 0 0 8px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background: #1e40af;
+      transform: scale(1.05);
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    .result h2 {
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .result p {
+      margin: 6px 0;
+      font-size: 15px;
+      color: #334155;
+    }
+
+    .error {
+      color: #dc2626;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    footer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>🌤 Weather App</h1>
+
+    <div class="search-box">
+      <input id="cityInput" type="text" placeholder="Enter city name" />
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <div class="error" id="errorMsg"></div>
+
+    <div class="result" id="weatherResult" style="display:none;">
+      <h2 id="cityName"></h2>
+      <p>🌡 Temperature: <span id="temp"></span>°C</p>
+      <p>💨 Wind Speed: <span id="wind"></span> km/h</p>
+    </div>
+
+    <footer>Owned by <strong>Sumit Mishra</strong></footer>
+  </div>
+
+  <script>
+    const btn = document.getElementById("searchBtn");
+    const input = document.getElementById("cityInput");
+    const errorMsg = document.getElementById("errorMsg");
+    const result = document.getElementById("weatherResult");
+
+    const cityName = document.getElementById("cityName");
+    const temp = document.getElementById("temp");
+    const wind = document.getElementById("wind");
+
+    async function getWeather(city) {
+      errorMsg.textContent = "";
+      result.style.display = "none";
+
+      if (!city) {
+        errorMsg.textContent = "City is required";
+        return;
+      }
+
+      try {
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1`);
+        const geoData = await geoRes.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+          errorMsg.textContent = "City not found";
+          return;
+        }
+
+        const { latitude, longitude, name } = geoData.results[0];
+
+        const weatherRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+        );
+        const weatherData = await weatherRes.json();
+
+        const current = weatherData.current_weather;
+
+        cityName.textContent = name;
+        temp.textContent = current.temperature;
+        wind.textContent = current.windspeed;
+
+        result.style.display = "block";
+
+      } catch (err) {
+        errorMsg.textContent = "Something went wrong";
+      }
+    }
+
+    btn.addEventListener("click", () => {
+      getWeather(input.value.trim());
+    });
+
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        getWeather(input.value.trim());
+      }
+    });
+  </script>
+
+</body>
+</html>
